@@ -57,6 +57,10 @@ services:
         value: production
       - key: NODE_VERSION
         value: 22.22.1
+      # The shared + API TypeScript build needs more than Node's default
+      # ~256 MB heap on small instances.
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=512
 
       - key: DATABASE_URL
         fromDatabase:

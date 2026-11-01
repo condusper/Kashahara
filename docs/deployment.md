@@ -93,12 +93,13 @@ Health Check Path:  /api/v1/health
 
 The repository includes `.node-version` (`22.22.1`), which Render reads on the
 next deploy. If the service still selects a newer Node, add
-`NODE_VERSION=22.22.1` under **Environment**, then add every variable from
-`render.yaml` (at minimum `DATABASE_URL`, `JWT_SECRET`,
-`PAYSTACK_SECRET_KEY`, `VTU_PROVIDER`, `BIGISUB_API_TOKEN`,
-`BIGISUB_TRANSACTION_PIN`, `ALLOW_SIMULATED_PAYMENTS=false`, and
-`ALLOW_DEV_CODES=false`). Without `DATABASE_URL` and `JWT_SECRET`, the API
-refuses to start in production.
+`NODE_VERSION=22.22.1` under **Environment**, and add
+`NODE_OPTIONS=--max-old-space-size=512` so the TypeScript build does not exceed
+Node's default heap limit. Then add every variable from `render.yaml` (at
+minimum `DATABASE_URL`, `JWT_SECRET`, `PAYSTACK_SECRET_KEY`, `VTU_PROVIDER`,
+`BIGISUB_API_TOKEN`, `BIGISUB_TRANSACTION_PIN`,
+`ALLOW_SIMULATED_PAYMENTS=false`, and `ALLOW_DEV_CODES=false`). Without
+`DATABASE_URL` and `JWT_SECRET`, the API refuses to start in production.
 
 The free instance type does not support `preDeployCommand`, so migrations do
 not run automatically. After the first successful deploy, open the service
