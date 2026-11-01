@@ -101,18 +101,32 @@ minimum `DATABASE_URL`, `JWT_SECRET`, `PAYSTACK_SECRET_KEY`, `VTU_PROVIDER`,
 `ALLOW_SIMULATED_PAYMENTS=false`, and `ALLOW_DEV_CODES=false`). Without
 `DATABASE_URL` and `JWT_SECRET`, the API refuses to start in production.
 
-The free instance type does not support `preDeployCommand`, so migrations do
-not run automatically. After the first successful deploy, open the service
-**Shell** and run:
+Free web services have **no Shell and no SSH** (both require a paid instance
+type), and they do not support `preDeployCommand`. The free alternative is to
+append the migration runner to the start command under **Settings**:
+
+```text
+Start Command:  node services/api/dist/migrate.js && node services/api/dist/index.js
+```
+
+Migrations are idempotent and take about a second, so it is safe to leave this
+in place on a free instance. On a paid instance, use the Shell or the
+`preDeployCommand` from `render.yaml` instead:
 
 ```bash
 node services/api/dist/migrate.js
 ```
 
-Alternatively, set the start command to
-`node services/api/dist/migrate.js && node services/api/dist/index.js` so
-migrations run on every boot. They are idempotent, but this adds a few seconds
-to each cold start and is only meant for the free instance type.
+You can also run migrations from your own machine against the Postgres
+**External Database URL**:
+
+```bash
+DATABASE_URL='<external database url>' npm run migrate
+```
+
+Free Render Postgres databases expire 30 days after creation, allow only one
+free database per workspace, and take no backups. Do not treat them as
+permanent storage.
 
 The free instance also sleeps after inactivity, so the first request after a
 quiet period can take a minute to wake. Use a paid instance for live traffic.
