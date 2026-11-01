@@ -42,6 +42,9 @@ describe('configuration', () => {
       ...base,
       NODE_ENV: 'production',
       DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
+      VTU_PROVIDER: 'bigisub',
+      BIGISUB_API_TOKEN: 'live-token',
+      BIGISUB_TRANSACTION_PIN: '1234',
     } as Record<string, string>;
 
     assert.throws(() => loadConfig(production as NodeJS.ProcessEnv), /PAYSTACK_SECRET_KEY/);
@@ -82,6 +85,26 @@ describe('configuration', () => {
       ALLOW_SIMULATED_PAYMENTS: 'false',
     } as NodeJS.ProcessEnv);
     assert.equal(appConfig.paystackCallbackUrl, 'kashahara://funding/{reference}');
+  });
+
+  it('refuses to run the mock provider in production', () => {
+    const production = {
+      ...base,
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
+      PAYSTACK_SECRET_KEY: 'sk_test_example',
+      ALLOW_SIMULATED_PAYMENTS: 'false',
+    } as Record<string, string>;
+
+    assert.throws(
+      () => loadConfig(production as NodeJS.ProcessEnv),
+      /VTU_PROVIDER must be bigisub, http, or ogdams in production/,
+    );
+    assert.throws(
+      () =>
+        loadConfig({ ...production, VTU_PROVIDER: 'mock' } as NodeJS.ProcessEnv),
+      /VTU_PROVIDER must not be mock in production/,
+    );
   });
 
   it('enforces the funding amount limits', () => {

@@ -106,6 +106,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const paystackMode = paystackKeyMode(paystackSecretKey);
   const paystackCallbackUrl = readString(env, 'PAYSTACK_CALLBACK_URL');
   const rawVtuProvider = readString(env, 'VTU_PROVIDER');
+  const effectiveVtuProvider: Config['vtuProvider'] =
+    rawVtuProvider === 'http' || rawVtuProvider === 'ogdams' || rawVtuProvider === 'bigisub'
+      ? rawVtuProvider
+      : 'mock';
 
   if (appEnv === 'production') {
     // Report every missing guardrail at once so a failed deploy does not have
@@ -133,10 +137,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
         'PAYSTACK_CALLBACK_URL must be an https URL or the kashahara:// app deep link in production',
       );
     }
-    if (rawVtuProvider === 'mock') {
-      problems.push('VTU_PROVIDER must not be mock in production');
+    if (effectiveVtuProvider === 'mock') {
+      // Unset and "mock" both fall back to the simulator. A live deployment
+      // must never charge for products it does not deliver.
+      problems.push(
+        rawVtuProvider === 'mock'
+          ? 'VTU_PROVIDER must not be mock in production'
+          : 'VTU_PROVIDER must be bigisub, http, or ogdams in production',
+      );
     }
-    if (rawVtuProvider === 'bigisub') {
+    if (effectiveVtuProvider === 'bigisub') {
       if (!readString(env, 'BIGISUB_API_TOKEN')) {
         problems.push('BIGISUB_API_TOKEN is required when VTU_PROVIDER=bigisub');
       }
@@ -163,10 +173,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     }
   }
 
-  const vtuProvider: Config['vtuProvider'] =
-    rawVtuProvider === 'http' || rawVtuProvider === 'ogdams' || rawVtuProvider === 'bigisub'
-      ? rawVtuProvider
-      : 'mock';
+  const vtuProvider = effectiveVtuProvider;
   if (vtuProvider === 'http') {
     if (!readString(env, 'VTU_BASE_URL') || !readString(env, 'VTU_API_KEY')) {
       throw new Error('VTU_BASE_URL and VTU_API_KEY are required when VTU_PROVIDER=http');
