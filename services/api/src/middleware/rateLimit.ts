@@ -97,10 +97,12 @@ export class FallbackRateLimitStore implements RateLimitStore {
 
   private withTimeout(promise: Promise<RateLimitResult>): Promise<RateLimitResult> {
     return new Promise((resolve, reject) => {
+      // Keep the timer referenced: the request is awaiting this promise, so an
+      // unref'd timer would let the event loop drain first and turn a slow
+      // store into a hang instead of a timeout.
       const timer = setTimeout(() => {
         reject(new Error(`Rate limit store timed out after ${this.timeoutMs}ms`));
       }, this.timeoutMs);
-      timer.unref?.();
       promise.then(
         (result) => {
           clearTimeout(timer);

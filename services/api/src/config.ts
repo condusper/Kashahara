@@ -105,35 +105,64 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const paystackSecretKey = readString(env, 'PAYSTACK_SECRET_KEY');
   const paystackMode = paystackKeyMode(paystackSecretKey);
   const paystackCallbackUrl = readString(env, 'PAYSTACK_CALLBACK_URL');
+  const rawVtuProvider = readString(env, 'VTU_PROVIDER');
 
   if (appEnv === 'production') {
+    // Report every missing guardrail at once so a failed deploy does not have
+    // to be repeated once per variable.
+    const problems: string[] = [];
+
     if (!jwtSecret || jwtSecret.length < 32) {
-      throw new Error('JWT_SECRET must be at least 32 characters in production');
+      problems.push('JWT_SECRET must be at least 32 characters in production');
     }
     if (!readString(env, 'DATABASE_URL')) {
-      throw new Error('DATABASE_URL is required in production');
+      problems.push('DATABASE_URL is required in production');
     }
     if (readBoolean(env, 'ALLOW_SIMULATED_PAYMENTS', false)) {
-      throw new Error('ALLOW_SIMULATED_PAYMENTS must be false in production');
+      problems.push('ALLOW_SIMULATED_PAYMENTS must be false in production');
     }
     if (!paystackSecretKey) {
-      throw new Error('PAYSTACK_SECRET_KEY is required in production');
+      problems.push('PAYSTACK_SECRET_KEY is required in production');
     }
     if (
       paystackCallbackUrl &&
       !paystackCallbackUrl.startsWith('https://') &&
       !paystackCallbackUrl.startsWith(APP_CALLBACK_SCHEME)
     ) {
-      throw new Error(
+      problems.push(
         'PAYSTACK_CALLBACK_URL must be an https URL or the kashahara:// app deep link in production',
       );
     }
-    if (readString(env, 'VTU_PROVIDER') === 'mock') {
-      throw new Error('VTU_PROVIDER must not be mock in production');
+    if (rawVtuProvider === 'mock') {
+      problems.push('VTU_PROVIDER must not be mock in production');
+    }
+    if (rawVtuProvider === 'bigisub') {
+      if (!readString(env, 'BIGISUB_API_TOKEN')) {
+        problems.push('BIGISUB_API_TOKEN is required when VTU_PROVIDER=bigisub');
+      }
+      const pin = readString(env, 'BIGISUB_TRANSACTION_PIN');
+      if (!pin || !/^\d{4}$/.test(pin)) {
+        problems.push(
+          'BIGISUB_TRANSACTION_PIN must be four digits when VTU_PROVIDER=bigisub',
+        );
+      }
+    }
+    if (rawVtuProvider === 'http') {
+      if (!readString(env, 'VTU_BASE_URL') || !readString(env, 'VTU_API_KEY')) {
+        problems.push('VTU_BASE_URL and VTU_API_KEY are required when VTU_PROVIDER=http');
+      }
+    }
+    if (rawVtuProvider === 'ogdams' && !readString(env, 'OGDAMS_API_KEY')) {
+      problems.push('OGDAMS_API_KEY is required when VTU_PROVIDER=ogdams');
+    }
+
+    if (problems.length > 0) {
+      throw new Error(
+        `Invalid production configuration:\n- ${problems.join('\n- ')}`,
+      );
     }
   }
 
-  const rawVtuProvider = readString(env, 'VTU_PROVIDER');
   const vtuProvider: Config['vtuProvider'] =
     rawVtuProvider === 'http' || rawVtuProvider === 'ogdams' || rawVtuProvider === 'bigisub'
       ? rawVtuProvider
