@@ -80,11 +80,10 @@ migrations, and starts the service.
 
 Creating a normal **Web Service** instead of applying the blueprint makes Render
 use its defaults: `yarn` as the build command and `yarn start` as the start
-command. `yarn` only installs dependencies, so the TypeScript API is never
-compiled and `yarn start` fails with `Command "start" not found`.
+command. The root `start` script builds the API before launching it, so the
+default `yarn start` now works after `yarn` installs dependencies.
 
-Either delete the service and apply the blueprint above, or open
-**Settings** and set:
+For faster cold starts, set the build and start commands explicitly instead:
 
 ```text
 Build Command:      npm ci --include=dev && npm run build:api

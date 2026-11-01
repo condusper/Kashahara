@@ -13,7 +13,7 @@
     "dev:mobile": "npm run start --workspace @kashahara/mobile",
     "build": "npm run build:api",
     "build:api": "npm run build --workspace @kashahara/api",
-    "start": "node services/api/dist/index.js",
+    "start": "npm run build:api && node services/api/dist/index.js",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspace @kashahara/api",
     "migrate": "npm run migrate --workspace @kashahara/api",
