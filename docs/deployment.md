@@ -46,15 +46,10 @@ volume grows.
 - An Expo account and, for Play Store submission, a Google Play developer
   account with a service account JSON key.
 
-The repository currently has no commits. Create the initial commit and push it
-before connecting Render:
+The repository must be pushed to GitHub, GitLab, or Bitbucket before Render can
+build it:
 
 ```bash
-cd /root/kashahara/kashahara-vtu
-git add .
-git commit -m "Initial Kashahara production deployment"
-git branch -M main
-git remote add origin git@github.com:<your-account>/<your-repo>.git
 git push -u origin main
 ```
 
@@ -80,6 +75,47 @@ unless you intend to sign every user out.
 
 The first deploy builds the shared workspace, compiles the API, runs the SQL
 migrations, and starts the service.
+
+### If the service was created manually
+
+Creating a normal **Web Service** instead of applying the blueprint makes Render
+use its defaults: `yarn` as the build command and `yarn start` as the start
+command. `yarn` only installs dependencies, so the TypeScript API is never
+compiled and `yarn start` fails with `Command "start" not found`.
+
+Either delete the service and apply the blueprint above, or open
+**Settings** and set:
+
+```text
+Build Command:      npm ci --include=dev && npm run build:api
+Start Command:      node services/api/dist/index.js
+Health Check Path:  /api/v1/health
+```
+
+The repository includes `.node-version` (`22.22.1`), which Render reads on the
+next deploy. If the service still selects a newer Node, add
+`NODE_VERSION=22.22.1` under **Environment**, then add every variable from
+`render.yaml` (at minimum `DATABASE_URL`, `JWT_SECRET`,
+`PAYSTACK_SECRET_KEY`, `VTU_PROVIDER`, `BIGISUB_API_TOKEN`,
+`BIGISUB_TRANSACTION_PIN`, `ALLOW_SIMULATED_PAYMENTS=false`, and
+`ALLOW_DEV_CODES=false`). Without `DATABASE_URL` and `JWT_SECRET`, the API
+refuses to start in production.
+
+The free instance type does not support `preDeployCommand`, so migrations do
+not run automatically. After the first successful deploy, open the service
+**Shell** and run:
+
+```bash
+node services/api/dist/migrate.js
+```
+
+Alternatively, set the start command to
+`node services/api/dist/migrate.js && node services/api/dist/index.js` so
+migrations run on every boot. They are idempotent, but this adds a few seconds
+to each cold start and is only meant for the free instance type.
+
+The free instance also sleeps after inactivity, so the first request after a
+quiet period can take a minute to wake. Use a paid instance for live traffic.
 
 ### Service URL
 
