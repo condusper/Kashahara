@@ -1,0 +1,123 @@
+# Render Blueprint for the Kashahara API.
+#
+# Deploy from the Render Dashboard: New > Blueprint, connect the repository,
+# and select this file. Render creates the Postgres database, the Key Value
+# (Redis) instance, and the API web service in one pass.
+#
+# Secrets marked `sync: false` are prompted for during creation. Never commit
+# their values here.
+
+databases:
+  - name: kashahara-db
+    databaseName: kashahara
+    user: kashahara
+    plan: 0.5c-1g
+    region: frankfurt
+    postgresMajorVersion: "17"
+    connectionPool: none
+    # Only the API on Render's private network can reach the database.
+    ipAllowList: []
+
+services:
+  - type: keyvalue
+    name: kashahara-redis
+    plan: 256mb
+    region: frankfurt
+    maxmemoryPolicy: noeviction
+    persistenceMode: off
+    # Only the API on Render's private network can reach Redis.
+    ipAllowList: []
+
+  - type: web
+    name: kashahara-api
+    runtime: node
+    plan: 0.5c-512mb
+    region: frankfurt
+    # The shared workspace is compiled first by the API's prebuild script.
+    # --include=dev is required because NODE_ENV=production is set below and
+    # TypeScript/tsx are build-time dependencies.
+    buildCommand: npm ci --include=dev && npm run build:api
+    # Runs on a separate instance after every successful build, before traffic
+    # moves to the new version. Requires a paid web service plan.
+    preDeployCommand: node services/api/dist/migrate.js
+    startCommand: node services/api/dist/index.js
+    healthCheckPath: /api/v1/health
+    maxShutdownDelaySeconds: 30
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - services/api/**
+        - packages/shared/**
+        - package.json
+        - package-lock.json
+        - tsconfig.base.json
+        - render.yaml
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22.22.1
+
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kashahara-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: kashahara-redis
+          type: keyvalue
+          property: connectionString
+
+      # Exposes Render's public service URL to the API (used for callbacks and
+      # logs). Render injects RENDER_EXTERNAL_URL automatically.
+      - key: APP_URL
+        fromService:
+          name: kashahara-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+
+      # Generated once and stored by Render. Rotating it signs every user out.
+      - key: JWT_SECRET
+        generateValue: true
+
+      # Prompted at Blueprint creation. Use live keys only after the webhook
+      # URL below is registered in the Paystack dashboard.
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+      - key: PAYSTACK_BASE_URL
+        value: https://api.paystack.co
+      - key: PAYSTACK_CALLBACK_URL
+        value: kashahara://funding/{reference}
+
+      # Live VTU supplier. Airtime and data are delivered through Bigisub.
+      - key: VTU_PROVIDER
+        value: bigisub
+      - key: BIGISUB_BASE_URL
+        value: https://api.bigisub.ng
+      - key: BIGISUB_API_TOKEN
+        sync: false
+      - key: BIGISUB_TRANSACTION_PIN
+        sync: false
+
+      # Production guardrails. These must never be true on live money rails.
+      - key: ALLOW_SIMULATED_PAYMENTS
+        value: "false"
+      - key: ALLOW_DEV_CODES
+        value: "false"
+
+      - key: DATA_MARKUP_PERCENT
+        value: "3"
+      - key: AIRTIME_FEE_PERCENT
+        value: "2.5"
+      - key: AIRTIME_FEE_MIN_KOBO
+        value: "100"
+      - key: PURCHASE_RECONCILE_INTERVAL_MS
+        value: "60000"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "120"
+      - key: AUTH_RATE_LIMIT_MAX_ATTEMPTS
+        value: "10"

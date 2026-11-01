@@ -1,0 +1,27 @@
+{
+  "name": "kashahara-vtu",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kashahara — premium Nigerian VTU and digital payments app",
+  "workspaces": [
+    "apps/mobile",
+    "services/api",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace @kashahara/api",
+    "dev:mobile": "npm run start --workspace @kashahara/mobile",
+    "build:api": "npm run build --workspace @kashahara/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspace @kashahara/api",
+    "migrate": "npm run migrate --workspace @kashahara/api",
+    "seed": "npm run seed --workspace @kashahara/api"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "overrides": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  }
+}

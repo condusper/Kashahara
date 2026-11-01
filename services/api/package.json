@@ -1,0 +1,41 @@
+{
+  "name": "@kashahara/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kashahara API — Express, TypeScript, PostgreSQL",
+  "main": "dist/index.js",
+  "scripts": {
+    "predev": "npm run build -w @kashahara/shared",
+    "dev": "tsx watch src/index.ts",
+    "prebuild": "npm run build -w @kashahara/shared",
+    "build": "tsc -p tsconfig.json && node -e \"require('node:fs').cpSync('src/migrations','dist/migrations',{recursive:true})\"",
+    "start": "node dist/index.js",
+    "pretypecheck": "npm run build -w @kashahara/shared",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "npm run build -w @kashahara/shared",
+    "test": "tsx --test src/tests/*.test.ts",
+    "migrate": "tsx src/migrate.ts",
+    "migrate:prod": "node dist/migrate.js",
+    "seed": "tsx src/seed.ts",
+    "paystack:check": "tsx src/scripts/paystack-check.ts",
+    "paystack:replay": "tsx src/scripts/replay-webhook.ts",
+    "bigisub:check": "tsx src/scripts/bigisub-check.ts"
+  },
+  "dependencies": {
+    "@kashahara/shared": "*",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "pg": "^8.16.3",
+    "redis": "^6.3.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.18.0",
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.20.6",
+    "typescript": "~6.0.3"
+  }
+}
