@@ -114,6 +114,33 @@ describe('configuration', () => {
     assert.equal(testMode.paystackMode, 'test');
   });
 
+  it('reports the VTU_PROVIDER value it received', () => {
+    const production = {
+      ...base,
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
+      PAYSTACK_SECRET_KEY: 'sk_live_example',
+      ALLOW_SIMULATED_PAYMENTS: 'false',
+    } as Record<string, string>;
+
+    assert.throws(
+      () =>
+        loadConfig({
+          ...production,
+          VTU_PROVIDER: 'bigisub-ng',
+        } as NodeJS.ProcessEnv),
+      /received "bigisub-ng"/,
+    );
+
+    const config = loadConfig({
+      ...production,
+      VTU_PROVIDER: 'BigiSub',
+      BIGISUB_API_TOKEN: 'live-token',
+      BIGISUB_TRANSACTION_PIN: '1234',
+    } as NodeJS.ProcessEnv);
+    assert.equal(config.vtuProvider, 'bigisub');
+  });
+
   it('enforces the funding amount limits', () => {
     assert.equal(fundingAmountKoboSchema.safeParse(9_999).success, false);
     assert.equal(fundingAmountKoboSchema.safeParse(10_000).success, true);

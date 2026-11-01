@@ -105,7 +105,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const paystackSecretKey = readString(env, 'PAYSTACK_SECRET_KEY');
   const paystackMode = paystackKeyMode(paystackSecretKey);
   const paystackCallbackUrl = readString(env, 'PAYSTACK_CALLBACK_URL');
-  const rawVtuProvider = readString(env, 'VTU_PROVIDER');
+  const rawVtuProvider = readString(env, 'VTU_PROVIDER')?.toLowerCase() ?? null;
   const effectiveVtuProvider: Config['vtuProvider'] =
     rawVtuProvider === 'http' || rawVtuProvider === 'ogdams' || rawVtuProvider === 'bigisub'
       ? rawVtuProvider
@@ -140,10 +140,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     if (effectiveVtuProvider === 'mock' && paystackMode === 'live') {
       // Unset and "mock" both fall back to the simulator. A live Paystack key
       // must never charge real money for products that are never delivered.
+      // Quote the received value so stray characters are visible in the log.
       problems.push(
         rawVtuProvider === 'mock'
           ? 'VTU_PROVIDER must not be mock in production with a live Paystack key'
-          : 'VTU_PROVIDER must be bigisub, http, or ogdams in production with a live Paystack key',
+          : rawVtuProvider
+            ? `VTU_PROVIDER must be bigisub, http, or ogdams in production with a live Paystack key (received ${JSON.stringify(rawVtuProvider)})`
+            : 'VTU_PROVIDER must be bigisub, http, or ogdams in production with a live Paystack key (it is not set)',
       );
     }
     if (effectiveVtuProvider === 'bigisub') {
