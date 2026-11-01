@@ -29,7 +29,7 @@ services:
     ipAllowList: []
 
   - type: web
-    name: kashahara-api
+    name: kashahara
     runtime: node
     plan: 0.5c-512mb
     region: frankfurt
@@ -72,7 +72,7 @@ services:
       # logs). Render injects RENDER_EXTERNAL_URL automatically.
       - key: APP_URL
         fromService:
-          name: kashahara-api
+          name: kashahara
           type: web
           envVarKey: RENDER_EXTERNAL_URL
 

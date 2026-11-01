@@ -10,13 +10,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://kashahara-api.onrender.com/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://kashahara.onrender.com/api/v1"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://kashahara-api.onrender.com/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://kashahara.onrender.com/api/v1"
       }
     }
   },

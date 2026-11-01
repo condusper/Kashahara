@@ -15,7 +15,7 @@ The mobile app is not hosted on Render. Only the API and its data stores are.
 
 | Resource | Render type | Purpose |
 | --- | --- | --- |
-| `kashahara-api` | Web service (Node) | Express API, HTTPS, health checks |
+| `kashahara` | Web service (Node) | Express API, HTTPS, health checks |
 | `kashahara-db` | Render Postgres | Users, wallets, ledger, purchases |
 | `kashahara-redis` | Render Key Value | Shared rate-limit counters |
 
@@ -83,10 +83,10 @@ migrations, and starts the service.
 
 ### Service URL
 
-The blueprint names the service `kashahara-api`, so the default URL is:
+The blueprint names the service `kashahara`, so the default URL is:
 
 ```text
-https://kashahara-api.onrender.com
+https://kashahara.onrender.com
 ```
 
 If Render assigns a different URL because the name is taken, update:
@@ -106,7 +106,7 @@ variables; otherwise the API only allows the local development origins.
 ## 4. Verify the deployment
 
 ```bash
-curl -s https://kashahara-api.onrender.com/api/v1/health | jq
+curl -s https://kashahara.onrender.com/api/v1/health | jq
 ```
 
 Expected values:
@@ -137,7 +137,7 @@ missing-database warnings.
 Also confirm a protected endpoint rejects anonymous requests:
 
 ```bash
-curl -i https://kashahara-api.onrender.com/api/v1/wallet
+curl -i https://kashahara.onrender.com/api/v1/wallet
 # HTTP/2 401
 ```
 
@@ -148,7 +148,7 @@ curl -i https://kashahara-api.onrender.com/api/v1/wallet
 In the Paystack Dashboard, open **Settings > API Keys & Webhooks** and set:
 
 ```text
-https://kashahara-api.onrender.com/api/v1/webhooks/paystack
+https://kashahara.onrender.com/api/v1/webhooks/paystack
 ```
 
 Enable at least the `charge.success` event. The webhook is verified with
@@ -238,7 +238,7 @@ EXPO_PUBLIC_API_URL=https://staging-api.example.com/api/v1 \
 For local development against the deployed API:
 
 ```bash
-EXPO_PUBLIC_API_URL=https://kashahara-api.onrender.com/api/v1 npm run dev:mobile
+EXPO_PUBLIC_API_URL=https://kashahara.onrender.com/api/v1 npm run dev:mobile
 ```
 
 ### Submit to Google Play
