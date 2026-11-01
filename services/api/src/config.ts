@@ -137,13 +137,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
         'PAYSTACK_CALLBACK_URL must be an https URL or the kashahara:// app deep link in production',
       );
     }
-    if (effectiveVtuProvider === 'mock') {
-      // Unset and "mock" both fall back to the simulator. A live deployment
-      // must never charge for products it does not deliver.
+    if (effectiveVtuProvider === 'mock' && paystackMode === 'live') {
+      // Unset and "mock" both fall back to the simulator. A live Paystack key
+      // must never charge real money for products that are never delivered.
       problems.push(
         rawVtuProvider === 'mock'
-          ? 'VTU_PROVIDER must not be mock in production'
-          : 'VTU_PROVIDER must be bigisub, http, or ogdams in production',
+          ? 'VTU_PROVIDER must not be mock in production with a live Paystack key'
+          : 'VTU_PROVIDER must be bigisub, http, or ogdams in production with a live Paystack key',
       );
     }
     if (effectiveVtuProvider === 'bigisub') {

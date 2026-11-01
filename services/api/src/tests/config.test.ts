@@ -87,24 +87,31 @@ describe('configuration', () => {
     assert.equal(appConfig.paystackCallbackUrl, 'kashahara://funding/{reference}');
   });
 
-  it('refuses to run the mock provider in production', () => {
+  it('refuses the mock provider with a live Paystack key in production', () => {
     const production = {
       ...base,
       NODE_ENV: 'production',
       DATABASE_URL: 'postgres://user:pass@localhost:5432/db',
-      PAYSTACK_SECRET_KEY: 'sk_test_example',
+      PAYSTACK_SECRET_KEY: 'sk_live_example',
       ALLOW_SIMULATED_PAYMENTS: 'false',
     } as Record<string, string>;
 
     assert.throws(
       () => loadConfig(production as NodeJS.ProcessEnv),
-      /VTU_PROVIDER must be bigisub, http, or ogdams in production/,
+      /VTU_PROVIDER must be bigisub, http, or ogdams in production with a live Paystack key/,
     );
     assert.throws(
       () =>
         loadConfig({ ...production, VTU_PROVIDER: 'mock' } as NodeJS.ProcessEnv),
-      /VTU_PROVIDER must not be mock in production/,
+      /VTU_PROVIDER must not be mock in production with a live Paystack key/,
     );
+
+    const testMode = loadConfig({
+      ...production,
+      PAYSTACK_SECRET_KEY: 'sk_test_example',
+    } as NodeJS.ProcessEnv);
+    assert.equal(testMode.vtuProvider, 'mock');
+    assert.equal(testMode.paystackMode, 'test');
   });
 
   it('enforces the funding amount limits', () => {
