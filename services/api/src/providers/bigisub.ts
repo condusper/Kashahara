@@ -91,8 +91,30 @@ function readBoolean(object: JsonObject | null, key: string): boolean | null {
   return null;
 }
 
+/**
+ * Bigisub answers a rejected request with a generic `"message": "Validation
+ * failed"` and the reason in `errors`, e.g.
+ * `{"non_field_errors": ["Incorrect PIN"]}`. Read those first so the customer
+ * is told what actually went wrong instead of "Validation failed".
+ */
+function readFieldErrors(payload: JsonObject | null): string[] {
+  const errors = asObject(payload?.errors);
+  if (!errors) return [];
+  const messages: string[] = [];
+  for (const [field, value] of Object.entries(errors)) {
+    const items = Array.isArray(value) ? value : [value];
+    for (const item of items) {
+      if (typeof item !== 'string' || !item.trim()) continue;
+      messages.push(field === 'non_field_errors' ? item.trim() : `${field}: ${item.trim()}`);
+    }
+  }
+  return messages;
+}
+
 function readMessage(payload: JsonObject | null): string | null {
   if (!payload) return null;
+  const fieldErrors = readFieldErrors(payload);
+  if (fieldErrors.length > 0) return fieldErrors.join('; ');
   const data = asObject(payload.data);
   const candidates = [
     readString(payload, 'message'),

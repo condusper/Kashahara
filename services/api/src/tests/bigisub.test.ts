@@ -378,6 +378,31 @@ describe('Bigisub provider', () => {
     );
   });
 
+  it('surfaces the field errors behind a generic validation failure', async () => {
+    const { provider } = providerWith(() =>
+      jsonResponse(
+        {
+          success: false,
+          message: 'Validation failed',
+          data: null,
+          errors: { non_field_errors: ['Incorrect PIN'] },
+        },
+        400,
+      ),
+    );
+
+    await assert.rejects(
+      provider.purchaseAirtime({
+        network: 'AIRTEL',
+        phone: '07018014056',
+        amountKobo: 5_000,
+        reference: 'KSH-AIR-4',
+      }),
+      (error: unknown) =>
+        error instanceof ProviderRejectedError && error.message === 'Incorrect PIN',
+    );
+  });
+
   it('rejects a missing or malformed transaction PIN at construction', () => {
     assert.throws(
       () =>
