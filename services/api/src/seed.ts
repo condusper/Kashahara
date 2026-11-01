@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { loadConfig } from './config';
+import { poolConfig } from './database';
 import { hashSecret, newId } from './crypto';
 import { logger } from './logger';
 import { PaystackClient } from './paystack';
@@ -23,7 +24,7 @@ async function main(): Promise<void> {
     );
   }
 
-  const pool = new Pool({ connectionString: config.databaseUrl, max: 2 });
+  const pool = new Pool(poolConfig(config.databaseUrl, 2));
   const store = new PostgresStore(pool);
   const paystack = new PaystackClient({
     secretKey: null,

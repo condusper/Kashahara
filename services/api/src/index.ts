@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { createClient } from 'redis';
 import { createApp, createServices } from './app';
 import { loadConfig } from './config';
+import { poolConfig } from './database';
 import { logger } from './logger';
 import {
   FallbackRateLimitStore,
@@ -21,7 +22,7 @@ let store;
 let pool: Pool | null = null;
 
 if (config.databaseUrl) {
-  pool = new Pool({ connectionString: config.databaseUrl, max: 10 });
+  pool = new Pool(poolConfig(config.databaseUrl, 10));
   store = new PostgresStore(pool);
   logger.info('Using PostgreSQL store');
 } else {

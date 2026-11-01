@@ -101,6 +101,11 @@ minimum `DATABASE_URL`, `JWT_SECRET`, `PAYSTACK_SECRET_KEY`, `VTU_PROVIDER`,
 `ALLOW_SIMULATED_PAYMENTS=false`, and `ALLOW_DEV_CODES=false`). Without
 `DATABASE_URL` and `JWT_SECRET`, the API refuses to start in production.
 
+Use the Postgres **Internal Database URL** when the web service runs in the same
+region; it avoids public egress and is faster. Otherwise the External Database
+URL works too: the API enables TLS automatically for any non-local host, because
+managed Postgres rejects unencrypted connections with `SSL/TLS required`.
+
 Free web services have **no Shell and no SSH** (both require a paid instance
 type), and they do not support `preDeployCommand`. The free alternative is to
 append the migration runner to the start command under **Settings**:

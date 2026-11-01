@@ -2,10 +2,11 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { loadConfig } from './config';
+import { poolConfig } from './database';
 import { logger } from './logger';
 
 export async function runMigrations(databaseUrl: string): Promise<void> {
-  const pool = new Pool({ connectionString: databaseUrl, max: 2 });
+  const pool = new Pool(poolConfig(databaseUrl, 2));
   const client = await pool.connect();
   try {
     await client.query(`
